@@ -1,63 +1,100 @@
-
 import { useState } from 'react';
-import { Filter, Plane, Timer, Calendar, DollarSign, Tag, UserRound, BarChart2 } from 'lucide-react';
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { SearchBar } from "@/components/ui/SearchBar";
-import { FadeIn } from "@/components/animation/FadeIn";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useSearch } from "@/hooks/useSearch";
+import { useSearch } from '@/hooks/useSearch';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { 
+  Calendar,
+  ChevronDown, 
+  Filter, 
+  Plane, 
+  Star,
+  Users,
+  Clock,
+  Calendar as CalendarIcon,
+  ArrowRight,
+  MapPin,
+  Luggage,
+  X
+} from 'lucide-react';
+import { 
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { FadeIn } from '@/components/animation/FadeIn';
 
-// Mock data for airlines
-const airlines = [
-  { id: 'premium-airlines', name: 'Premium Airlines' },
-  { id: 'skyway-express', name: 'Skyway Express' },
-  { id: 'ocean-air', name: 'Ocean Air' },
-  { id: 'royal-pacific', name: 'Royal Pacific' },
-  { id: 'mountain-flights', name: 'Mountain Flights' },
+// Mock data for popular destinations
+const popularDestinations = [
+  {
+    id: 'dest-1',
+    name: 'Paris',
+    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c6e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
+  },
+  {
+    id: 'dest-2',
+    name: 'Tokyo',
+    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=1788&auto=format&fit=crop&ixlib=rb-4.0.3',
+  },
+  {
+    id: 'dest-3',
+    name: 'Rome',
+    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a4a6b?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
+  },
+  {
+    id: 'dest-4',
+    name: 'New York',
+    image: 'https://images.unsplash.com/photo-1496037754943-16959304f768?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
+  },
 ];
 
 const Flights = () => {
+  const [showSearch, setShowSearch] = useState(false);
+  const [location, setLocation] = useState('');
+  const [minPrice, setMinPrice] = useState<number[]>([0]);
+  const [maxPrice, setMaxPrice] = useState<number[]>([1000]);
+  const [rating, setRating] = useState<number[]>([0]);
+  const [departDate, setDepartDate] = useState<Date | undefined>(undefined);
+  const [returnDate, setReturnDate] = useState<Date | undefined>(undefined);
+
   const { search, results, isLoading } = useSearch();
-  const [priceRange, setPriceRange] = useState([200, 1500]);
-  const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  
-  // Filter flights
-  const filteredFlights = results.filter(result => result.type === 'flight');
 
-  const handleAirlineToggle = (airlineId: string) => {
-    setSelectedAirlines(prev => 
-      prev.includes(airlineId)
-        ? prev.filter(id => id !== airlineId)
-        : [...prev, airlineId]
-    );
-  };
-
-  const handlePriceChange = (values: number[]) => {
-    setPriceRange(values);
-  };
-
-  const applyFilters = () => {
+  const handleSearch = () => {
     search({
       searchType: 'flights',
-      minPrice: priceRange[0],
-      maxPrice: priceRange[1],
-      // Additional filter params would go here
+      location: location,
+      minPrice: minPrice[0],
+      maxPrice: maxPrice[0],
+      rating: rating[0],
+      departDate: departDate,
+      returnDate: returnDate,
     });
   };
 
-  const resetFilters = () => {
-    setPriceRange([200, 1500]);
-    setSelectedAirlines([]);
-    search({ searchType: 'flights' });
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocation(e.target.value);
   };
 
-  // Function to format time (in a real app, you would use actual date objects)
-  const formatFlightTime = (time: string) => {
-    return time;
+  const handleMinPriceChange = (value: number[]) => {
+    setMinPrice(value);
+  };
+
+  const handleMaxPriceChange = (value: number[]) => {
+    setMaxPrice(value);
+  };
+
+  const handleRatingChange = (value: number[]) => {
+    setRating(value);
   };
 
   return (
@@ -65,398 +102,504 @@ const Flights = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+      <div className="relative h-[50vh] flex items-center">
         <img 
-          src="https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3"
-          alt="Flight" 
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          src="https://images.unsplash.com/photo-1436491865324-7583cc24c6c7?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3"
+          alt="Flights" 
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10"></div>
-        
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="container relative z-10 text-center">
           <FadeIn direction="up">
-            <h1 className="text-4xl md:text-5xl font-bold text-white font-display mb-6">
-              Fly to Your Dream Destination
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white font-display mb-4">
+              Find Your Next Flight
             </h1>
-            <p className="text-white/90 text-lg mb-8 max-w-3xl mx-auto">
-              Search and compare flights to find the best deals for your next journey
+            <p className="text-white/90 text-lg md:text-xl mb-8 max-w-3xl mx-auto">
+              Search and compare flights from hundreds of airlines and travel sites.
             </p>
+            <Button 
+              onClick={() => setShowSearch(true)}
+              className="bg-travel-blue hover:bg-travel-blue-dark text-white"
+            >
+              Search Flights
+            </Button>
           </FadeIn>
         </div>
-      </section>
-      
-      {/* Search Section */}
-      <section className="bg-white py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto -mt-24 relative z-20">
-          <SearchBar type="flight" />
-        </div>
-      </section>
+      </div>
       
       {/* Main Content */}
-      <section className="py-12 bg-travel-gray-light flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex-1 bg-gray-50">
+        <div className="page-container py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
             {/* Filters - Desktop */}
-            <div className="hidden lg:block w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl shadow-card p-6 sticky top-24">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-                  <button 
-                    onClick={resetFilters}
-                    className="text-sm text-travel-blue hover:text-travel-blue-dark"
-                  >
-                    Reset all
-                  </button>
-                </div>
-                
-                <div className="space-y-6">
-                  {/* Price Range */}
-                  <div className="pb-6 border-b border-gray-100">
-                    <h4 className="text-sm font-medium text-gray-900 mb-4">Price Range</h4>
-                    <Slider
-                      defaultValue={[200, 1500]}
-                      value={priceRange}
-                      onValueChange={handlePriceChange}
-                      max={2000}
-                      step={50}
-                      className="mb-6"
-                    />
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">${priceRange[0]}</span>
-                      <span className="text-sm text-gray-600">${priceRange[1]}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Airlines */}
-                  <div className="pb-6 border-b border-gray-100">
-                    <h4 className="text-sm font-medium text-gray-900 mb-4">Airlines</h4>
-                    <div className="space-y-3">
-                      {airlines.map(airline => (
-                        <div key={airline.id} className="flex items-center">
-                          <Checkbox
-                            id={`airline-${airline.id}`}
-                            checked={selectedAirlines.includes(airline.id)}
-                            onCheckedChange={() => handleAirlineToggle(airline.id)}
-                            className="text-travel-blue"
-                          />
-                          <label 
-                            htmlFor={`airline-${airline.id}`}
-                            className="ml-2 text-sm text-gray-700"
-                          >
-                            {airline.name}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Stops */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-4">Stops</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <Checkbox
-                          id="nonstop"
-                          className="text-travel-blue"
-                        />
-                        <label 
-                          htmlFor="nonstop"
-                          className="ml-2 text-sm text-gray-700"
-                        >
-                          Nonstop
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <Checkbox
-                          id="1-stop"
-                          className="text-travel-blue"
-                        />
-                        <label 
-                          htmlFor="1-stop"
-                          className="ml-2 text-sm text-gray-700"
-                        >
-                          1 Stop
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <Checkbox
-                          id="2-stops"
-                          className="text-travel-blue"
-                        />
-                        <label 
-                          htmlFor="2-stops"
-                          className="ml-2 text-sm text-gray-700"
-                        >
-                          2+ Stops
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={applyFilters}
-                  className="w-full mt-6 bg-travel-blue text-white hover:bg-travel-blue-dark"
-                >
-                  Apply Filters
-                </Button>
-              </div>
-            </div>
-            
-            {/* Mobile Filters Button */}
-            <div className="lg:hidden mb-4">
-              <Button 
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outline" 
-                className="w-full justify-center"
-              >
-                <Filter size={18} className="mr-2" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
+            <div className="hidden lg:block bg-white rounded-xl shadow-sm p-6 h-fit">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Filter Flights</h3>
               
-              {/* Mobile Filters */}
-              {showFilters && (
-                <div className="bg-white rounded-xl shadow-card p-6 mt-4 animate-fade-in">
-                  {/* Filter content - similar to desktop but more compact */}
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-                    <button 
-                      onClick={resetFilters}
-                      className="text-sm text-travel-blue hover:text-travel-blue-dark"
-                    >
-                      Reset all
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {/* Price Range */}
-                    <div className="pb-6 border-b border-gray-100">
-                      <h4 className="text-sm font-medium text-gray-900 mb-4">Price Range</h4>
-                      <Slider
-                        defaultValue={[200, 1500]}
-                        value={priceRange}
-                        onValueChange={handlePriceChange}
-                        max={2000}
-                        step={50}
-                        className="mb-6"
+              <div className="mb-4">
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <Input
+                  type="text"
+                  id="location"
+                  placeholder="Enter a destination"
+                  value={location}
+                  onChange={handleLocationChange}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice[0]}
+                    onChange={(e) => handleMinPriceChange([Number(e.target.value)])}
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">-</span>
+                  <Input
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice[0]}
+                    onChange={(e) => handleMaxPriceChange([Number(e.target.value)])}
+                    className="w-24"
+                  />
+                </div>
+                <Slider
+                  defaultValue={maxPrice}
+                  max={2000}
+                  step={10}
+                  onValueChange={handleMaxPriceChange}
+                  className="mt-2"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                <Slider
+                  defaultValue={rating}
+                  max={5}
+                  step={0.5}
+                  onValueChange={handleRatingChange}
+                  className="mt-2"
+                />
+                <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
+                  <span>0 Star</span>
+                  <span>5 Stars</span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Dates</label>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[140px] justify-start text-left font-normal",
+                          !departDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {departDate ? (
+                          format(departDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                      <CalendarComponent
+                        mode="single"
+                        selected={departDate}
+                        onSelect={setDepartDate}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                        initialFocus
                       />
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">${priceRange[0]}</span>
-                        <span className="text-sm text-gray-600">${priceRange[1]}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Airlines */}
-                    <div className="pb-6 border-b border-gray-100">
-                      <h4 className="text-sm font-medium text-gray-900 mb-4">Airlines</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {airlines.map(airline => (
-                          <button
-                            key={airline.id}
-                            onClick={() => handleAirlineToggle(airline.id)}
-                            className={`py-1 px-3 rounded-lg text-sm transition-colors ${
-                              selectedAirlines.includes(airline.id) 
-                                ? 'bg-travel-blue/10 text-travel-blue' 
-                                : 'bg-gray-50 text-gray-700'
-                            }`}
-                          >
-                            {airline.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Stops */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-4">Stops</h4>
-                      <div className="flex flex-wrap gap-2">
-                        <button className="py-1 px-3 rounded-lg text-sm bg-gray-50 text-gray-700 hover:bg-travel-blue/10 hover:text-travel-blue transition-colors">
-                          Nonstop
-                        </button>
-                        <button className="py-1 px-3 rounded-lg text-sm bg-gray-50 text-gray-700 hover:bg-travel-blue/10 hover:text-travel-blue transition-colors">
-                          1 Stop
-                        </button>
-                        <button className="py-1 px-3 rounded-lg text-sm bg-gray-50 text-gray-700 hover:bg-travel-blue/10 hover:text-travel-blue transition-colors">
-                          2+ Stops
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3 mt-6">
-                    <Button 
-                      onClick={() => setShowFilters(false)}
-                      variant="outline" 
-                      className="w-1/2"
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        applyFilters();
-                        setShowFilters(false);
-                      }}
-                      className="w-1/2 bg-travel-blue text-white hover:bg-travel-blue-dark"
-                    >
-                      Apply Filters
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Flight Results */}
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2 sm:mb-0 font-display">
-                  Available Flights {filteredFlights.length > 0 && `(${filteredFlights.length})`}
-                </h2>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600 mr-2">Sort by:</span>
-                  <select className="text-sm border-gray-200 rounded-lg focus:border-travel-blue focus:ring focus:ring-travel-blue/20 py-1">
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Duration: Shortest</option>
-                    <option>Departure: Earliest</option>
-                    <option>Departure: Latest</option>
-                  </select>
+                    </PopoverContent>
+                  </Popover>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[140px] justify-start text-left font-normal",
+                          !returnDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {returnDate ? (
+                          format(returnDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                      <CalendarComponent
+                        mode="single"
+                        selected={returnDate}
+                        onSelect={setReturnDate}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="bg-white rounded-xl shadow-card animate-pulse p-6">
-                      <div className="flex flex-col sm:flex-row justify-between">
-                        <div className="w-full sm:w-2/3">
-                          <div className="h-5 bg-gray-200 rounded w-1/4 mb-4"></div>
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="h-8 bg-gray-200 rounded w-1/5"></div>
-                            <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-                            <div className="h-8 bg-gray-200 rounded w-1/5"></div>
-                          </div>
-                          <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-                        </div>
-                        <div className="w-full sm:w-1/3 mt-4 sm:mt-0">
-                          <div className="h-8 bg-gray-200 rounded w-1/2 mb-4 sm:ml-auto"></div>
-                          <div className="h-10 bg-gray-200 rounded w-full sm:w-3/4 sm:ml-auto"></div>
-                        </div>
+              <Button 
+                onClick={handleSearch}
+                className="w-full mt-6 bg-travel-blue hover:bg-travel-blue-dark text-white"
+              >
+                Apply Filters
+              </Button>
+            </div>
+            
+            {/* Results */}
+            <div className="lg:col-span-3">
+              {/* Mobile Filter Button */}
+              <div className="lg:hidden mb-4 flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-gray-800">Flight Results</h2>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Filter className="mr-2 h-4 w-4" />
+                      Filters
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="sm:w-[400px] p-6">
+                    <SheetHeader>
+                      <SheetTitle>Filter Flights</SheetTitle>
+                      <SheetDescription>
+                        Apply filters to refine your search results.
+                      </SheetDescription>
+                    </SheetHeader>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                      <Input
+                        type="text"
+                        id="location"
+                        placeholder="Enter a destination"
+                        value={location}
+                        onChange={handleLocationChange}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Min"
+                          value={minPrice[0]}
+                          onChange={(e) => handleMinPriceChange([Number(e.target.value)])}
+                          className="w-24"
+                        />
+                        <span className="text-gray-500">-</span>
+                        <Input
+                          type="number"
+                          placeholder="Max"
+                          value={maxPrice[0]}
+                          onChange={(e) => handleMaxPriceChange([Number(e.target.value)])}
+                          className="w-24"
+                        />
+                      </div>
+                      <Slider
+                        defaultValue={maxPrice}
+                        max={2000}
+                        step={10}
+                        onValueChange={handleMaxPriceChange}
+                        className="mt-2"
+                      />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                      <Slider
+                        defaultValue={rating}
+                        max={5}
+                        step={0.5}
+                        onValueChange={handleRatingChange}
+                        className="mt-2"
+                      />
+                      <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
+                        <span>0 Star</span>
+                        <span>5 Stars</span>
                       </div>
                     </div>
-                  ))}
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Dates</label>
+                      <div className="flex items-center gap-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[140px] justify-start text-left font-normal",
+                                !departDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {departDate ? (
+                                format(departDate, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                            <CalendarComponent
+                              mode="single"
+                              selected={departDate}
+                              onSelect={setDepartDate}
+                              disabled={(date) =>
+                                date < new Date()
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[140px] justify-start text-left font-normal",
+                                !returnDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {returnDate ? (
+                                format(returnDate, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                            <CalendarComponent
+                              mode="single"
+                              selected={returnDate}
+                              onSelect={setReturnDate}
+                              disabled={(date) =>
+                                date < new Date()
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 flex justify-end">
+                      <SheetClose asChild>
+                        <Button type="button" variant="secondary" className="mr-2">Cancel</Button>
+                      </SheetClose>
+                      <Button 
+                        onClick={handleSearch}
+                        className="bg-travel-blue hover:bg-travel-blue-dark text-white"
+                      >
+                        Apply Filters
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+              
+              {/* Sort Controls */}
+              <div className="bg-white rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-500 mr-2">Sort by:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="text-sm">
+                        Relevance
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40">
+                      <div className="p-2 space-y-1">
+                        <Button variant="ghost" className="justify-start w-full">
+                          Price: Low to High
+                        </Button>
+                        <Button variant="ghost" className="justify-start w-full">
+                          Price: High to Low
+                        </Button>
+                        <Button variant="ghost" className="justify-start w-full">
+                          Rating: High to Low
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-              ) : filteredFlights.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredFlights.map((flight, index) => (
-                    <FadeIn key={flight.id} delay={100 * index} direction="up">
-                      <div className="bg-white rounded-xl shadow-card hover:shadow-elevation transition-shadow duration-300 overflow-hidden">
-                        <div className="p-6">
-                          <div className="flex flex-col sm:flex-row justify-between">
-                            <div>
-                              <div className="flex items-center mb-4">
-                                <Plane size={18} className="text-travel-blue mr-2" />
-                                <span className="font-semibold text-gray-900">{flight.airline}</span>
-                                {flight.id && (
-                                  <span className="ml-2 text-gray-500 text-sm">Flight {flight.id}</span>
-                                )}
+                <div className="flex items-center mt-2 sm:mt-0">
+                  <span className="text-sm text-gray-500 mr-2">View:</span>
+                  <Button variant="outline" size="icon" className="mr-2">
+                    <Plane className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <MapPin className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Flight Results */}
+              <div className="space-y-6">
+                {isLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin w-10 h-10 border-4 border-travel-blue border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-500">Searching for flights...</p>
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                    <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">No Flights Found</h3>
+                    <p className="text-gray-500 mb-6">Try adjusting your search criteria or explore our popular destinations</p>
+                    <Button 
+                      onClick={() => setShowSearch(true)}
+                      className="bg-travel-blue hover:bg-travel-blue-dark text-white"
+                    >
+                      Modify Search
+                    </Button>
+                  </div>
+                ) : (
+                  results.filter(result => result.type === 'flight').map((flight) => (
+                    <div 
+                      key={flight.id} 
+                      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
+                        <div className="md:col-span-3 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                                <Plane className="w-5 h-5 text-travel-blue" />
                               </div>
-                              
-                              <div className="flex items-center justify-between mb-4 space-x-10">
-                                <div className="text-center">
-                                  <div className="text-xl font-bold text-gray-900">
-                                    {formatFlightTime(flight.departDate || '')}
-                                  </div>
-                                  <div className="text-sm text-gray-500">{flight.origin}</div>
-                                </div>
-                                
-                                <div className="flex-1 px-4">
-                                  <div className="relative">
-                                    <div className="absolute top-1/2 left-0 right-0 border-t border-gray-300 border-dashed"></div>
-                                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 rounded-full bg-travel-blue"></div>
-                                    <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 rounded-full bg-travel-blue"></div>
-                                  </div>
-                                  <div className="text-xs text-center text-gray-500 mt-2">
-                                    {flight.duration}
-                                  </div>
-                                </div>
-                                
-                                <div className="text-center">
-                                  <div className="text-xl font-bold text-gray-900">
-                                    {formatFlightTime(flight.returnDate || '')}
-                                  </div>
-                                  <div className="text-sm text-gray-500">{flight.destination}</div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center text-sm text-gray-600">
-                                <Timer size={16} className="mr-1" />
-                                <span>Duration: {flight.duration}</span>
-                                
-                                <span className="mx-2">•</span>
-                                
-                                <Calendar size={16} className="mr-1" />
-                                <span>Depart: {flight.departDate}</span>
-                                
-                                {flight.returnDate && (
-                                  <>
-                                    <span className="mx-2">•</span>
-                                    <UserRound size={16} className="mr-1" />
-                                    <span>Economy</span>
-                                  </>
-                                )}
+                              <div>
+                                <h3 className="font-bold text-gray-900">{flight.name}</h3>
+                                <p className="text-sm text-gray-500">{flight.airline}</p>
                               </div>
                             </div>
-                            
-                            <div className="mt-6 sm:mt-0 sm:ml-6 flex flex-col sm:items-end">
-                              <div className="flex items-center mb-3">
-                                <Tag size={16} className="text-green-500 mr-1" />
-                                <span className="text-green-600 text-sm font-medium">Best Value</span>
-                              </div>
-                              
-                              <div className="text-2xl font-bold text-travel-blue mb-3">
-                                ${flight.price}
-                              </div>
-                              
-                              <Button className="bg-travel-blue text-white hover:bg-travel-blue-dark transition-all duration-300">
-                                Select Flight
-                              </Button>
+                            <div className="flex items-center bg-travel-blue/5 px-3 py-1 rounded-full">
+                              <Clock size={14} className="text-travel-blue mr-1" />
+                              <span className="text-sm font-medium">{flight.flightDuration}</span>
                             </div>
                           </div>
                           
-                          <div className="mt-6 pt-4 border-t border-gray-100">
-                            <div className="flex flex-wrap gap-3">
-                              <div className="flex items-center text-sm bg-travel-blue/5 px-3 py-1 rounded-full">
-                                <UserRound size={14} className="text-travel-blue mr-1" />
-                                <span>Free seat selection</span>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-b border-gray-100 py-4">
+                            <div className="flex flex-col items-start mb-3 sm:mb-0">
+                              <span className="text-xs text-gray-500 mb-1">Departure</span>
+                              <span className="text-lg font-bold text-gray-900">
+                                {flight.origin}
+                              </span>
+                              <span className="text-sm text-gray-500">{flight.departDate}</span>
+                            </div>
+                            
+                            <div className="flex-1 flex justify-center px-4 mb-3 sm:mb-0">
+                              <div className="w-full flex items-center">
+                                <div className="h-[2px] flex-1 bg-gray-200"></div>
+                                <ArrowRight className="mx-2 text-gray-400" />
+                                <div className="h-[2px] flex-1 bg-gray-200"></div>
                               </div>
-                              <div className="flex items-center text-sm bg-travel-blue/5 px-3 py-1 rounded-full">
-                                <BarChart2 size={14} className="text-travel-blue mr-1" />
-                                <span>In-flight entertainment</span>
-                              </div>
-                              <div className="flex items-center text-sm bg-travel-blue/5 px-3 py-1 rounded-full">
-                                <DollarSign size={14} className="text-travel-blue mr-1" />
-                                <span>Refundable fare</span>
-                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col items-start sm:items-end">
+                              <span className="text-xs text-gray-500 mb-1">Arrival</span>
+                              <span className="text-lg font-bold text-gray-900">
+                                {flight.destination}
+                              </span>
+                              <span className="text-sm text-gray-500">{flight.returnDate}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center text-sm bg-gray-50 px-3 py-1 rounded-full">
+                              <Luggage size={14} className="text-gray-500 mr-1" />
+                              <span>20kg Luggage</span>
+                            </div>
+                            <div className="flex items-center text-sm bg-gray-50 px-3 py-1 rounded-full">
+                              <Users size={14} className="text-gray-500 mr-1" />
+                              <span>2 Adults</span>
+                            </div>
+                            <div className="flex items-center text-sm bg-gray-50 px-3 py-1 rounded-full">
+                              <MapPin size={14} className="text-gray-500 mr-1" />
+                              <span>Direct Flight</span>
                             </div>
                           </div>
                         </div>
+                        
+                        <div className="md:border-l md:pl-6 flex flex-col justify-between">
+                          <div className="flex items-baseline mb-2">
+                            <span className="text-2xl font-bold text-travel-blue">${flight.price}</span>
+                            <span className="text-sm text-gray-500 ml-1">/ person</span>
+                          </div>
+                          
+                          <div className="space-y-3 mt-auto">
+                            <Button className="w-full bg-white border border-travel-blue text-travel-blue hover:bg-travel-blue/5">
+                              View Details
+                            </Button>
+                            <Button className="w-full bg-travel-blue hover:bg-travel-blue-dark text-white">
+                              Book Now
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </FadeIn>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl shadow-card p-8 text-center">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No flights found</h3>
-                  <p className="text-gray-600 mb-6">Try adjusting your search filters or dates</p>
-                  <Button 
-                    onClick={resetFilters} 
-                    variant="outline"
-                  >
-                    Reset Filters
-                  </Button>
-                </div>
-              )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile filters sheet */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" className="absolute top-4 right-4 sm:hidden">
+            <Filter className="mr-2 h-4 w-4" />
+            Filters
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="sm:w-[400px]">
+          <SheetHeader>
+            <SheetTitle>Filter Flights</SheetTitle>
+            <SheetDescription>
+              Apply filters to refine your search results.
+            </SheetDescription>
+          </SheetHeader>
+          {/* Add filter components here */}
+        </SheetContent>
+      </Sheet>
+      
+      {/* CTA Section */}
+      <section className="py-16 bg-travel-blue text-white">
+        <div className="page-container">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl font-bold font-display mb-4">
+                Ready to book your next adventure?
+              </h2>
+              <p className="text-lg text-white/80 mb-6">
+                Explore our exclusive flight deals and start planning your dream trip today.
+              </p>
+              <Button className="bg-white text-travel-blue hover:bg-travel-blue-light hover:text-travel-blue-dark">
+                View Flight Deals
+              </Button>
+            </div>
+            <div className="flex justify-center">
+              <Plane className="w-32 h-32 text-white/20 rotate-45" />
             </div>
           </div>
         </div>
