@@ -34,9 +34,9 @@ interface SearchResult {
   departDate?: string;
   returnDate?: string;
   airline?: string;
-  duration?: string;
+  flightDuration?: string;
   // Package specific fields
-  duration?: string;
+  tripDuration?: string;
   groupSize?: string;
   startDate?: string;
   features?: string[];
@@ -95,7 +95,7 @@ const mockSearchResults = (options: SearchOptions): Promise<SearchResult[]> => {
           departDate: '2023-07-15',
           returnDate: '2023-07-22',
           airline: 'Premium Airlines',
-          duration: '7h 15m',
+          flightDuration: '7h 15m',
           image: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
         },
         {
@@ -108,7 +108,7 @@ const mockSearchResults = (options: SearchOptions): Promise<SearchResult[]> => {
           departDate: '2023-08-10',
           returnDate: '2023-08-24',
           airline: 'Skyway Express',
-          duration: '11h 45m',
+          flightDuration: '11h 45m',
           image: 'https://images.unsplash.com/photo-1542558848-25f6fceb17e7?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
         },
       ];
@@ -122,7 +122,7 @@ const mockSearchResults = (options: SearchOptions): Promise<SearchResult[]> => {
           location: 'Maldives',
           price: 2950,
           rating: 4.9,
-          duration: '7 Days',
+          tripDuration: '7 Days',
           groupSize: 'Up to 8 people',
           startDate: 'Flexible',
           features: ['All-Inclusive', 'Snorkeling', 'Private Villa'],
@@ -136,7 +136,7 @@ const mockSearchResults = (options: SearchOptions): Promise<SearchResult[]> => {
           location: 'Italy, France, Spain',
           price: 3200,
           rating: 4.7,
-          duration: '12 Days',
+          tripDuration: '12 Days',
           groupSize: '10-15 people',
           startDate: 'Monthly departures',
           features: ['Guided Tours', 'Premium Hotels', 'Transportation'],
