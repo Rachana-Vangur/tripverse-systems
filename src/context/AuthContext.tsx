@@ -1,10 +1,12 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 
 // User types based on roles
 export type UserRole = 'customer' | 'agent' | 'hotel_staff';
 
-interface User {
+interface AppUser {
   id: string;
   email: string;
   firstName: string;
@@ -14,12 +16,12 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   error: string | null;
 }
 
@@ -38,84 +40,116 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: async () => {},
   signup: async () => {},
-  logout: () => {},
+  logout: async () => {},
   error: null,
 });
 
-// Sample mock users for demonstration
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'customer@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3',
-  },
-  {
-    id: '2',
-    email: 'agent@example.com',
-    firstName: 'Sarah',
-    lastName: 'Smith',
-    role: 'agent',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1522&auto=format&fit=crop&ixlib=rb-4.0.3',
-  },
-  {
-    id: '3',
-    email: 'staff@example.com',
-    firstName: 'Michael',
-    lastName: 'Johnson',
-    role: 'hotel_staff',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3',
-  },
-];
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for stored user in localStorage on initial load
-    const storedUser = localStorage.getItem('tripverse_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Check for an active Supabase session on load
+    const checkSession = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
+        }
+        
+        if (session) {
+          await syncUserData(session.user);
+        }
+      } catch (err) {
+        console.error('Error checking auth session:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkSession();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsLoading(true);
+        
+        if (event === 'SIGNED_IN' && session) {
+          await syncUserData(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+    
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+  
+  // Sync user profile data from supabase
+  const syncUserData = async (authUser: User) => {
+    try {
+      // Get user profile from users table
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        // If no profile exists but we have a valid auth user, create a default profile
+        return setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          firstName: '',
+          lastName: '',
+          role: 'customer', // Default role
+          avatar: ''
+        });
+      }
+      
+      // Set user with combined auth and profile data
+      setUser({
+        id: authUser.id,
+        email: authUser.email || '',
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        role: profile.role,
+        avatar: profile.avatar_url
+      });
+    } catch (err) {
+      console.error('Error syncing user data:', err);
+    }
+  };
 
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Mock API call to authenticate user
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Find the user by email and role (in a real app, this would be a server validation)
-      const foundUser = mockUsers.find(u => 
-        u.email.toLowerCase() === email.toLowerCase() && u.role === role
-      );
-      
-      if (!foundUser) {
-        throw new Error('Invalid email or password');
-      }
-      
-      // In a real auth system, you'd verify the password here
-      if (password !== 'password') { // Using a simple password for demo
-        throw new Error('Invalid email or password');
-      }
-      
-      // Store user in state and localStorage
-      setUser(foundUser);
-      localStorage.setItem('tripverse_user', JSON.stringify(foundUser));
-      
+      if (error) throw error;
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof AuthError) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred');
+        setError('An unexpected error occurred during login');
       }
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -126,46 +160,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     
     try {
-      // Mock API call to register user
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if email already exists
-      const userExists = mockUsers.some(u => 
-        u.email.toLowerCase() === userData.email.toLowerCase()
-      );
-      
-      if (userExists) {
-        throw new Error('Email already in use');
-      }
-      
-      // Create new user (in a real app, this would be handled by the server)
-      const newUser: User = {
-        id: `${mockUsers.length + 1}`,
+      // Sign up with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        role: userData.role,
-      };
+        password: userData.password,
+      });
       
-      // Store user in state and localStorage
-      setUser(newUser);
-      localStorage.setItem('tripverse_user', JSON.stringify(newUser));
+      if (authError) throw authError;
       
+      if (authData.user) {
+        // Create user profile in users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: userData.email,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            role: userData.role,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        
+        if (profileError) throw profileError;
+      }
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof AuthError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred');
+        setError('An unexpected error occurred during signup');
       }
+      console.error('Signup error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    // Clear user from state and localStorage
-    setUser(null);
-    localStorage.removeItem('tripverse_user');
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

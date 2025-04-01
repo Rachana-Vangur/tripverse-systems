@@ -13,7 +13,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<'customer' | 'agent' | 'hotel_staff'>('customer');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login, error } = useAuth();
@@ -25,7 +24,7 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
-      await login(email, password, role);
+      await login(email, password);
       toast({
         title: "Login successful",
         description: "Welcome back to TripVerse!",
@@ -121,23 +120,6 @@ const Login = () => {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                    Account Type
-                  </label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as any)}
-                    className="block w-full rounded-lg border-gray-200 focus:border-travel-blue focus:ring focus:ring-travel-blue/20 transition-all duration-200"
-                  >
-                    <option value="customer">Customer</option>
-                    <option value="agent">Travel Agent</option>
-                    <option value="hotel_staff">Hotel Staff</option>
-                  </select>
                 </div>
 
                 <div className="flex items-center justify-between">

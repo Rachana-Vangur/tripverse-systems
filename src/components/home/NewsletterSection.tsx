@@ -1,8 +1,18 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/animation/FadeIn";
+import { useNewsletter } from "@/hooks/useNewsletter";
 
 export const NewsletterSection = () => {
+  const [email, setEmail] = useState("");
+  const { subscribeToNewsletter, isSubmitting } = useNewsletter();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    subscribeToNewsletter(email);
+  };
+
   return (
     <section className="py-16 bg-travel-gray-light">
       <div className="page-container">
@@ -19,16 +29,23 @@ export const NewsletterSection = () => {
             
             <div>
               <FadeIn direction="right">
-                <div className="flex flex-col sm:flex-row gap-3">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                   <input 
                     type="email" 
                     placeholder="Enter your email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="flex-1 border border-gray-200 rounded-lg px-4 py-3 focus:border-travel-blue focus:ring focus:ring-travel-blue/20 transition-all duration-200"
+                    required
                   />
-                  <Button className="bg-travel-blue text-white hover:bg-travel-blue-dark transition-all duration-300">
-                    Subscribe
+                  <Button 
+                    type="submit" 
+                    className="bg-travel-blue text-white hover:bg-travel-blue-dark transition-all duration-300"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Subscribing..." : "Subscribe"}
                   </Button>
-                </div>
+                </form>
                 <p className="text-sm text-gray-500 mt-3">
                   We respect your privacy. Unsubscribe at any time.
                 </p>
