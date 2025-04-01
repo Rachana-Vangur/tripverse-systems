@@ -5,13 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from 'date-fns';
+import { useSearch } from '@/hooks/useSearch';
+import { useToast } from '@/hooks/use-toast';
 
 interface SearchBarProps {
   type?: 'hotel' | 'flight' | 'package' | 'destination';
   className?: string;
+  onResultsFound?: (hasResults: boolean) => void;
 }
 
-export const SearchBar = ({ type = 'hotel', className = '' }: SearchBarProps) => {
+export const SearchBar = ({ type = 'hotel', className = '', onResultsFound }: SearchBarProps) => {
+  const { search, results, isLoading } = useSearch();
+  const { toast } = useToast();
   const [location, setLocation] = useState('');
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
@@ -25,19 +30,73 @@ export const SearchBar = ({ type = 'hotel', className = '' }: SearchBarProps) =>
   const [passengers, setPassengers] = useState(1);
 
   const handleSearch = () => {
-    console.log('Searching for:', {
-      type,
-      location,
-      checkIn,
-      checkOut,
-      guests,
-      origin,
-      destination,
-      departDate,
-      returnDate,
-      passengers
+    // Validate inputs based on search type
+    if (type === 'hotel' || type === 'destination' || type === 'package') {
+      if (!location.trim()) {
+        toast({
+          title: "Location required",
+          description: "Please enter a destination to search.",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else if (type === 'flight') {
+      if (!origin.trim() || !destination.trim()) {
+        toast({
+          title: "Origin and destination required",
+          description: "Please enter both origin and destination cities.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Map the search type to the expected value in the useSearch hook
+    const searchType = type === 'hotel' ? 'hotels' : 
+                       type === 'flight' ? 'flights' : 
+                       type === 'package' ? 'packages' : 'destinations';
+    
+    // Prepare search options based on the search type
+    const searchOptions = {
+      searchType: searchType,
+      ...(type === 'hotel' || type === 'destination' || type === 'package' ? {
+        location,
+        checkIn,
+        checkOut,
+        guests,
+      } : {
+        origin,
+        destination,
+        departDate,
+        returnDate,
+        passengers,
+      })
+    };
+    
+    // Perform the search
+    search(searchOptions);
+    
+    // Show toast for search progress
+    toast({
+      title: "Searching...",
+      description: `Looking for ${searchType} matching your criteria.`,
     });
-    // Implement search logic based on type
+
+    // Notify parent component about results after a brief delay to allow search to complete
+    setTimeout(() => {
+      if (onResultsFound) {
+        onResultsFound(results.length > 0);
+      }
+      
+      // Show results toast
+      toast({
+        title: results.length > 0 ? "Results found" : "No results",
+        description: results.length > 0 
+          ? `Found ${results.length} ${searchType} matching your criteria.`
+          : `No ${searchType} found. Try different search criteria.`,
+        variant: results.length > 0 ? "default" : "destructive"
+      });
+    }, 600);
   };
 
   const decrementGuests = () => {
@@ -261,9 +320,22 @@ export const SearchBar = ({ type = 'hotel', className = '' }: SearchBarProps) =>
           <Button 
             className="w-full mt-6 bg-travel-blue text-white hover:bg-travel-blue-dark transition-all duration-300 shadow-subtle md:h-[42px]"
             onClick={handleSearch}
+            disabled={isLoading}
           >
-            <Search className="mr-2" size={18} />
-            Search
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Searching...
+              </span>
+            ) : (
+              <>
+                <Search className="mr-2" size={18} />
+                Search
+              </>
+            )}
           </Button>
         </div>
       </div>

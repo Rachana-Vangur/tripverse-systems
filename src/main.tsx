@@ -20,6 +20,12 @@ if (rootElement) {
       "%cThe app is running in demo mode with mock data. To enable full functionality, add your Supabase credentials.",
       "color: #666; font-style: italic;"
     );
+    
+    // Log how to use the search feature in demo mode
+    console.info(
+      "%cTIP: Search functionality is active in demo mode. Try searching for hotels, flights, or packages!",
+      "color: #3b82f6; font-style: italic; font-weight: bold;"
+    );
   }
   
   createRoot(rootElement).render(<App />);

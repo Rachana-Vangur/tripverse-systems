@@ -3,12 +3,30 @@ import { useState } from 'react';
 import { Hotel, PlaneIcon, PackageIcon, Heart } from 'lucide-react';
 import { FadeIn } from "@/components/animation/FadeIn";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { useSearch } from '@/hooks/useSearch';
 
 // Tabs for search options
 type SearchTab = 'hotels' | 'flights' | 'packages' | 'activities';
 
 export const HeroSection = () => {
   const [activeSearchTab, setActiveSearchTab] = useState<SearchTab>('hotels');
+  const { results } = useSearch();
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleResultsFound = (hasResults: boolean) => {
+    setHasSearched(true);
+    
+    // If we have results, we could scroll to a results section
+    if (hasResults && results.length > 0) {
+      // Scroll to results section with a small delay to ensure it's rendered
+      setTimeout(() => {
+        const resultsSection = document.getElementById('search-results');
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  };
 
   return (
     <section className="hero-section">
@@ -76,8 +94,11 @@ export const HeroSection = () => {
         {/* Search Bar */}
         <FadeIn direction="up" delay={600}>
           <SearchBar 
-            type={activeSearchTab === 'flights' ? 'flight' : 'hotel'} 
-            className="max-w-5xl mx-auto" 
+            type={activeSearchTab === 'flights' ? 'flight' : 
+                  activeSearchTab === 'packages' ? 'package' : 
+                  activeSearchTab === 'activities' ? 'destination' : 'hotel'} 
+            className="max-w-5xl mx-auto"
+            onResultsFound={handleResultsFound}
           />
         </FadeIn>
       </div>
