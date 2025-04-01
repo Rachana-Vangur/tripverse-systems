@@ -52,26 +52,36 @@ export const SearchBar = ({ type = 'hotel', className = '', onResultsFound }: Se
     }
 
     // Map the search type to the expected value in the useSearch hook
-    const searchType = type === 'hotel' ? 'hotels' : 
-                       type === 'flight' ? 'flights' : 
-                       type === 'package' ? 'packages' : 'destinations';
+    const searchTypeMap = {
+      'hotel': 'hotels',
+      'flight': 'flights',
+      'package': 'packages',
+      'destination': 'destinations'
+    } as const;
+    
+    const searchType = searchTypeMap[type];
     
     // Prepare search options based on the search type
-    const searchOptions = {
-      searchType: searchType,
-      ...(type === 'hotel' || type === 'destination' || type === 'package' ? {
+    let searchOptions;
+    
+    if (type === 'hotel' || type === 'destination' || type === 'package') {
+      searchOptions = {
+        searchType,
         location,
-        checkIn,
-        checkOut,
+        ...(checkIn && { checkIn }),
+        ...(checkOut && { checkOut }),
         guests,
-      } : {
+      };
+    } else { // flight
+      searchOptions = {
+        searchType,
         origin,
         destination,
-        departDate,
-        returnDate,
+        ...(departDate && { departDate }),
+        ...(returnDate && { returnDate }),
         passengers,
-      })
-    };
+      };
+    }
     
     // Perform the search
     search(searchOptions);

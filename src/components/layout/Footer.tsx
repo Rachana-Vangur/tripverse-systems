@@ -54,6 +54,9 @@ export const Footer = () => {
               <li>
                 <Link to="/tour-guides" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Tour Guides</Link>
               </li>
+              <li>
+                <Link to="/about" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">About Us</Link>
+              </li>
             </ul>
           </div>
 
@@ -61,19 +64,19 @@ export const Footer = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Support</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">FAQ</a>
+                <Link to="/faq" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">FAQ</Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Privacy Policy</a>
+                <Link to="/privacy" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Privacy Policy</Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Terms of Service</a>
+                <Link to="/terms" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Terms of Service</Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Refund Policy</a>
+                <Link to="/refund-policy" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Refund Policy</Link>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Customer Support</a>
+                <Link to="/contact" className="text-gray-600 hover:text-travel-blue transition-colors duration-200">Customer Support</Link>
               </li>
             </ul>
           </div>
@@ -91,7 +94,14 @@ export const Footer = () => {
               </li>
               <li className="flex items-center">
                 <Mail size={20} className="text-travel-blue mr-3 flex-shrink-0" />
-                <span className="text-gray-600">info@tripverse.com</span>
+                <a href="mailto:info@tripverse.com" className="text-gray-600 hover:text-travel-blue">info@tripverse.com</a>
+              </li>
+              <li className="mt-6">
+                <Link to="/contact">
+                  <Button className="w-full bg-travel-blue hover:bg-travel-blue-dark text-white">
+                    Contact Us
+                  </Button>
+                </Link>
               </li>
             </ul>
           </div>

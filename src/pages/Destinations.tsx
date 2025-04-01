@@ -8,6 +8,7 @@ import { FadeIn } from "@/components/animation/FadeIn";
 import { Button } from "@/components/ui/button";
 import { DestinationCard } from "@/components/ui/DestinationCard";
 import { useSearch } from "@/hooks/useSearch";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for destination regions
 const regions = [
@@ -80,20 +81,52 @@ const popularDestinations = [
 
 const Destinations = () => {
   const { search, results, isLoading } = useSearch();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!searchQuery.trim()) {
+      toast({
+        title: "Search term required",
+        description: "Please enter a destination to search for.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     search({ 
       searchType: 'destinations',
       location: searchQuery
+    });
+    
+    toast({
+      title: "Searching destinations...",
+      description: "Looking for destinations matching your criteria.",
     });
   };
 
   const handleRegionSelect = (regionId: string) => {
     setSelectedRegion(prev => prev === regionId ? null : regionId);
-    // In a real app, we would filter by region here
+    
+    // Filter destinations by region
+    if (selectedRegion !== regionId) {
+      // This is a mock implementation. In a real app, you would need to
+      // have region data in your destinations or filter server-side
+      search({ 
+        searchType: 'destinations',
+        location: regions.find(r => r.id === regionId)?.name || ''
+      });
+      
+      toast({
+        title: `Showing ${regions.find(r => r.id === regionId)?.name} destinations`,
+        description: "Filtered by selected region.",
+      });
+    } else {
+      // Reset search if deselecting a region
+      search({ searchType: 'destinations' });
+    }
   };
 
   // Filter destinations based on search or show popular ones

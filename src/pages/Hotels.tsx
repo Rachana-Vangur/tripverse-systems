@@ -19,10 +19,15 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { useSearch } from "@/hooks/useSearch";
+import { useToast } from "@/hooks/use-toast";
 
 const Hotels = () => {
   const { results, isLoading, error, search } = useSearch();
+  const { toast } = useToast();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
   
   const filters = [
     { name: 'wifi', label: 'Free WiFi', icon: Wifi },
@@ -40,10 +45,37 @@ const Hotels = () => {
     }
   };
   
+  const handleRatingClick = (rating: number) => {
+    setSelectedRating(selectedRating === rating ? null : rating);
+  };
+  
   const handleSearch = () => {
-    search({
-      searchType: 'hotels',
-      // Add other search params as needed
+    const searchOptions = {
+      searchType: 'hotels' as const,
+      ...(minPrice && { minPrice: Number(minPrice) }),
+      ...(maxPrice && { maxPrice: Number(maxPrice) }),
+      ...(selectedRating && { rating: selectedRating }),
+      ...(selectedFilters.length > 0 && { amenities: selectedFilters }),
+    };
+    
+    search(searchOptions);
+    
+    toast({
+      title: "Searching hotels...",
+      description: "Applied filters to find matching hotels.",
+    });
+  };
+  
+  const clearFilters = () => {
+    setSelectedFilters([]);
+    setMinPrice('');
+    setMaxPrice('');
+    setSelectedRating(null);
+    search({ searchType: 'hotels' });
+    
+    toast({
+      title: "Filters cleared",
+      description: "Showing all available hotels.",
     });
   };
   
