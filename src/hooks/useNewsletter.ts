@@ -20,6 +20,26 @@ export const useNewsletter = () => {
     setIsSubmitting(true);
 
     try {
+      // Check if we're using mock client
+      const isMockClient = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (isMockClient) {
+        // Simulate successful subscription with mock data
+        console.log('Mock subscription to newsletter with email:', email);
+        
+        // Simulate a short delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        toast({
+          title: "Subscription successful!",
+          description: "You've been subscribed to our newsletter (demo mode).",
+          variant: "default"
+        });
+        
+        return;
+      }
+      
+      // Real Supabase implementation
       // Check if email already exists
       const { data: existingSubscriber } = await supabase
         .from('newsletter_subscribers')

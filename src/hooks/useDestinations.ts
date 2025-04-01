@@ -22,7 +22,53 @@ export const useDestinations = () => {
       try {
         setIsLoading(true);
         
-        // Fetch all destinations
+        // Check if we have real Supabase credentials or using fallback
+        const isMockClient = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        if (isMockClient) {
+          // Use mock data when Supabase is not configured
+          const mockDestinations: Destination[] = [
+            {
+              id: 'dest-1',
+              name: 'Santorini',
+              location: 'Greece',
+              image_url: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=1738&auto=format&fit=crop&ixlib=rb-4.0.3',
+              rating: 4.9,
+              description: 'Famous for its stunning caldera, whitewashed buildings, and sunsets.'
+            },
+            {
+              id: 'dest-2',
+              name: 'Bali',
+              location: 'Indonesia',
+              image_url: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1738&auto=format&fit=crop&ixlib=rb-4.0.3',
+              rating: 4.8,
+              description: 'Beautiful beaches, lush rice terraces, and vibrant cultural experiences.'
+            },
+            {
+              id: 'dest-3',
+              name: 'Tokyo',
+              location: 'Japan',
+              image_url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=1788&auto=format&fit=crop&ixlib=rb-4.0.3',
+              rating: 4.7,
+              description: 'An ultramodern city with traditional temples and gardens.'
+            },
+            {
+              id: 'dest-4',
+              name: 'Swiss Alps',
+              location: 'Switzerland',
+              image_url: 'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3',
+              rating: 4.9,
+              description: 'Majestic mountains, pristine lakes, and charming villages.'
+            },
+          ];
+          
+          setDestinations(mockDestinations);
+          setFeaturedDestinations(mockDestinations.slice(0, 4));
+          setError(null);
+          return;
+        }
+        
+        // Real Supabase query (only runs if credentials are available)
         const { data, error } = await supabase
           .from('destinations')
           .select('*')

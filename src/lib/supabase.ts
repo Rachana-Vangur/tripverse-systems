@@ -1,14 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Set default values for development environment
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is missing. Please check your environment variables.');
-}
-
+// Create a temporary client for development that won't cause crashes
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Log a development message if keys are missing
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Supabase URL or Anon Key is missing. Using mock client. Set up your environment variables to enable Supabase functionality.');
+}
 
 // Type definitions for Supabase tables
 export type Database = {
